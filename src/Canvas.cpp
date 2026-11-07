@@ -10,15 +10,13 @@ Canvas::Canvas(QWidget* parent) : QWidget(parent)
     setMouseTracking(true);
 }
 
-
 void Canvas::calculate()
 {
-    ready = points.size() == 3;
-    if (ready) answer = geometry::orientation(points[0], points[1], points[2], 5.0);
+    ready = points.size() == 4;
+    if (ready) answer = geometry::intersect(points[0], points[1], points[2], points[3]);
     emit changed();
     update();
 }
-
 
 void Canvas::reset()
 {
@@ -32,16 +30,18 @@ void Canvas::reset()
 void Canvas::setOnline(bool value)
 {
     online = value;
-    if (online && points.size() == 3) calculate();
+    if (online && points.size() == 4) calculate();
 }
 
 QString Canvas::resultText() const
 {
-    if (points.size() < 3) return "Добавьте три точки: A, B, P";
+    if (points.size() < 4) return "Добавьте четыре точки: A, B, C, D";
     if (!ready) return "Нажмите Рассчитать";
-    if (answer == 1) return "1: P слева от AB";
-    if (answer == -1) return "-1: P справа от AB";
-    return "0: P на прямой AB";
+    if (answer.type == 0) return "Пересечения нет";
+    if (answer.type == 1) return QString("Пересечение: (%1; %2)").arg(answer.a.x, 0, 'f', 2).arg(answer.a.y, 0, 'f', 2);
+    return QString("Общий отрезок: (%1; %2) - (%3; %4)")
+        .arg(answer.a.x, 0, 'f', 2).arg(answer.a.y, 0, 'f', 2)
+        .arg(answer.b.x, 0, 'f', 2).arg(answer.b.y, 0, 'f', 2);
 }
 
 void Canvas::paintEvent(QPaintEvent*)
@@ -57,16 +57,23 @@ void Canvas::paintEvent(QPaintEvent*)
         p.setPen(QPen(QColor(40, 105, 200), 2));
         p.drawLine(geometry_qt::toScreen(points[0], size()), geometry_qt::toScreen(points[1], size()));
     }
+    if (points.size() == 4) {
+        p.setPen(QPen(QColor(220, 120, 35), 2));
+        p.drawLine(geometry_qt::toScreen(points[2], size()), geometry_qt::toScreen(points[3], size()));
+    }
+    if (ready && answer.type == 1) {
+        p.setPen(Qt::NoPen);
+        p.setBrush(QColor(210, 40, 60));
+        p.drawEllipse(geometry_qt::toScreen(answer.a, size()), 7, 7);
+    }
+    if (ready && answer.type == 2) {
+        p.setPen(QPen(QColor(150, 75, 185), 5));
+        p.drawLine(geometry_qt::toScreen(answer.a, size()), geometry_qt::toScreen(answer.b, size()));
+    }
 
-    const char* names[3] = {"A", "B", "P"};
+    const char* names[4] = {"A", "B", "C", "D"};
     for (int i = 0; i < (int)points.size(); i++) {
-        QColor color(40, 105, 200);
-        if (i == 2) {
-            color = QColor(90, 90, 90);
-            if (ready && answer == 1) color = QColor(20, 150, 80);
-            if (ready && answer == -1) color = QColor(205, 50, 60);
-            if (ready && answer == 0) color = QColor(150, 90, 180);
-        }
+        QColor color = i < 2 ? QColor(40, 105, 200) : QColor(220, 120, 35);
         QPointF pos = geometry_qt::toScreen(points[i], size());
         p.setPen(QPen(color, 1));
         p.setBrush(color);
@@ -89,9 +96,9 @@ void Canvas::mousePressEvent(QMouseEvent* event)
             return;
         }
     }
-    if (points.size() < 3) {
+    if (points.size() < 4) {
         points.push_back(geometry_qt::fromScreen(pos, size()));
-        if (points.size() == 3 && online) calculate();
+        if (points.size() == 4 && online) calculate();
         else {
             ready = false;
             emit changed();
@@ -104,7 +111,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
     if (dragging < 0 || !(event->buttons() & Qt::LeftButton)) return;
     points[dragging] = geometry_qt::fromScreen(event->position(), size());
-    if (online && points.size() == 3) calculate();
+    if (online && points.size() == 4) calculate();
     else {
         ready = false;
         emit changed();

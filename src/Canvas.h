@@ -26,7 +26,7 @@ protected:
 private:
     std::vector<geometry::Point> points;
     int dragging = -1;
-    bool online = true;
+    bool online = false;
     bool ready = false;
-    int answer = 0;
+    geometry::Intersection answer;
 };

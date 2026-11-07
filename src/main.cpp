@@ -11,11 +11,11 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     QWidget window;
-    window.setWindowTitle("Задача 1. Предикат поворота");
+    window.setWindowTitle("Задача 2. Пересечение двух отрезков");
     window.resize(920, 650);
 
     QVBoxLayout* layout = new QVBoxLayout(&window);
-    QLabel* hint = new QLabel("Кликните A, B, P. Затем перетаскивайте точки мышью.");
+    QLabel* hint = new QLabel("Кликните A, B, C, D. Затем нажмите Рассчитать.");
     layout->addWidget(hint);
 
     Canvas* canvas = new Canvas;
@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     QPushButton* run = new QPushButton("Рассчитать");
     QPushButton* clear = new QPushButton("Сброс");
     QCheckBox* check = new QCheckBox("Онлайн-пересчет");
-    check->setChecked(true);
+    check->setChecked(false);
     buttons->addWidget(run);
     buttons->addWidget(clear);
     buttons->addWidget(check);
